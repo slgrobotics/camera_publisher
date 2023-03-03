@@ -5,7 +5,7 @@ This is a simple Python/OpenCV publisher, created by literally following directi
 
     https://automaticaddison.com/getting-started-with-opencv-in-ros-2-foxy-fitzroy-python/
 
-All credit go to Mr. Addison Sears-Collins (https://automaticaddison.com) - his site is a great resource for anything Robotics.
+All credit goes to Mr. Addison Sears-Collins (https://automaticaddison.com) - his site is a great resource for anything Robotics.
 
 Works with a Webcam or FPV Grabber Camera on Ubuntu 22.04 Desktop.
 
