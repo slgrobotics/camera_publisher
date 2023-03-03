@@ -38,7 +38,7 @@ class ImagePublisher(Node):
     # Create a VideoCapture object
     # The argument '0' gets the default webcam.
 
-    self.cap = cv2.VideoCapture(2)
+    self.cap = cv2.VideoCapture(0)
 
     # -------------------------------------------------------
          
