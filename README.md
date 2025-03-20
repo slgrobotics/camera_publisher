@@ -32,3 +32,4 @@ source cd ~/grabber_ws/install/setup.bash
 ~/grabber_ws/run.sh 
 ```
 
+See this guide: https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md
