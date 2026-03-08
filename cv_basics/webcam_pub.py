@@ -1,90 +1,106 @@
-# Basic ROS 2 program to publish real-time streaming 
-# video from your built-in webcam
-# Author:
-# - Addison Sears-Collins
-# - https://automaticaddison.com
-# - https://automaticaddison.com/getting-started-with-opencv-in-ros-2-foxy-fitzroy-python/
-  
-# Import the necessary libraries
-import rclpy # Python Client Library for ROS 2
-from rclpy.node import Node # Handles the creation of nodes
-from sensor_msgs.msg import Image # Image is the message type
-from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
-import cv2 # OpenCV library
- 
+"""
+ROS2 webcam publisher node.
+
+Captures frames from a local camera using OpenCV and publishes them at ~20 Hz
+as both:
+  • sensor_msgs/msg/Image              (/camera/image_raw)
+  • sensor_msgs/msg/CompressedImage    (/camera/image_raw/compressed)
+
+Intended for visualization in RViz and efficient transport to downstream perception nodes.
+
+Author: Sergei Grichine / ChatGPT.com
+"""
+
+import rclpy
+from rclpy.node import Node
+
+from sensor_msgs.msg import Image, CompressedImage
+from cv_bridge import CvBridge
+import cv2
+
+
 class ImagePublisher(Node):
-  """
-  Create an ImagePublisher class, which is a subclass of the Node class.
-  """
-  def __init__(self):
-    """
-    Class constructor to set up the node
-    """
-    # Initiate the Node class's constructor and give it a name
-    super().__init__('image_publisher')
-      
-    # Create the publisher. This publisher will publish an Image
-    # to the video_frames topic. The queue size is 10 messages.
-    self.publisher_ = self.create_publisher(Image, 'img', 10)  # 10 is queue size
-      
-    # We will publish a message every 0.05 seconds
-    timer_period = 0.05  # seconds
-      
-    # Create the timer
-    self.timer = self.create_timer(timer_period, self.timer_callback)
-         
+    def __init__(self):
+        super().__init__('image_publisher')
 
-    # -------------------------------------------------------
-    # Create a VideoCapture object
-    # The argument '0' gets the default webcam.
+        self.raw_pub = self.create_publisher(Image, '/camera/image_raw', 10)
+        self.compressed_pub = self.create_publisher(
+            CompressedImage,
+            '/camera/image_raw/compressed',
+            10
+        )
 
-    self.cap = cv2.VideoCapture(0)
+        self.br = CvBridge()
 
-    # -------------------------------------------------------
-         
+        # Prefer V4L2 on Linux instead of default backend
+        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        if not self.cap.isOpened():
+            self.get_logger().error('Could not open video device')
+            raise RuntimeError('Could not open video device')
 
+        # Reduce load
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FPS, 20)
 
-    # Used to convert between ROS and OpenCV images
-    self.br = CvBridge()
-   
-  def timer_callback(self):
-    """
-    Callback function.
-    This function gets called every 0.1 seconds.
-    """
-    # Capture frame-by-frame
-    # This method returns True/False as well
-    # as the video frame.
-    ret, frame = self.cap.read()
-          
-    if ret == True:
-      # Publish the image.
-      # The 'cv2_to_imgmsg' method converts an OpenCV
-      # image to a ROS 2 image message
-      self.publisher_.publish(self.br.cv2_to_imgmsg(frame))
-    else: 
-      # Display the message on the console
-      self.get_logger().error('grabbing video frame')
-  
+        # Optional: ask camera for MJPEG, often much faster on USB webcams
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+
+        self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
+
+        self.get_logger().info('Image publisher node has been started.')
+
+    def timer_callback(self):
+        ret, frame = self.cap.read()
+        if not ret or frame is None:
+            self.get_logger().error('Error grabbing video frame')
+            return
+
+        stamp = self.get_clock().now().to_msg()
+        frame_id = 'camera_frame'
+
+        # Raw image
+        raw_msg = self.br.cv2_to_imgmsg(frame, encoding='bgr8')
+        raw_msg.header.stamp = stamp
+        raw_msg.header.frame_id = frame_id
+        self.raw_pub.publish(raw_msg)
+
+        # Compressed image
+        ok, encoded = cv2.imencode(
+            '.jpg',
+            frame,
+            [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        )
+        if not ok:
+            self.get_logger().error('Failed to encode frame as JPEG')
+            return
+
+        comp_msg = CompressedImage()
+        comp_msg.header.stamp = stamp
+        comp_msg.header.frame_id = frame_id
+        comp_msg.format = 'jpeg'
+        comp_msg.data = encoded.tobytes()
+        self.compressed_pub.publish(comp_msg)
+
+    def destroy_node(self):
+        if hasattr(self, 'cap') and self.cap is not None:
+            self.cap.release()
+        super().destroy_node()
+
 def main(args=None):
-  
-  # Initialize the rclpy library
-  rclpy.init(args=args)
-  
-  # Create the node
-  image_publisher = ImagePublisher()
-  
-  # Spin the node so the callback function is called.
-  rclpy.spin(image_publisher)
-  
-  # Destroy the node explicitly
-  # (optional - otherwise it will be done automatically
-  # when the garbage collector destroys the node object)
-  image_publisher.destroy_node()
-  
-  # Shutdown the ROS client library for Python
-  rclpy.shutdown()
-  
-if __name__ == '__main__':
-  main()
+    rclpy.init(args=args)
+    image_publisher = ImagePublisher()
 
+    try:
+        rclpy.spin(image_publisher)
+    except KeyboardInterrupt:
+        print('Keyboard interrupt, shutting down.')
+    finally:
+        try:
+            image_publisher.destroy_node()
+        finally:
+            if rclpy.ok():
+                rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
