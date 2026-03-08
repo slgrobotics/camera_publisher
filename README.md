@@ -54,7 +54,9 @@ ros2 run cv_basics img_publisher_raw
 
 **Note:** the raw image stream uses about **20 MBytes/s**, while the compressed stream uses **less than 1 MBytes/s**.
 
-See this guide: https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md
+See these guides:
+- https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md
+- https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera_FPV.md
 
 ------------------
 
