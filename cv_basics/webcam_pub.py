@@ -9,6 +9,13 @@ as both:
 Intended for visualization in RViz and efficient transport to downstream perception nodes.
 
 Author: Sergei Grichine / ChatGPT.com
+
+See https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md#python-opencv-and-gstreamer
+
+sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-base \
+ gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps \
+ gstreamer1.0-libcamera
+
 """
 
 import rclpy
@@ -32,21 +39,21 @@ class ImagePublisher(Node):
 
         self.br = CvBridge()
 
-        # Prefer V4L2 on Linux instead of default backend
-        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        # camera name and available resolutions:
+        #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
+
+        camera = "/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10"
+
+        cam_pipeline_str = "libcamerasrc camera-name=%s ! video/x-raw,width=640,height=480,framerate=10/1,format=RGBx ! videoconvert ! videoscale ! video/x-raw,width=640,height=480,format=BGR ! appsink" % (camera)
+
+        # Use gstreamer:
+        self.cap = cv2.VideoCapture(cam_pipeline_str, cv2.CAP_GSTREAMER)
+
         if not self.cap.isOpened():
             self.get_logger().error('Could not open video device')
             raise RuntimeError('Could not open video device')
 
-        # Reduce load
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self.cap.set(cv2.CAP_PROP_FPS, 20)
-
-        # Optional: ask camera for MJPEG, often much faster on USB webcams
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-
-        self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
+        self.timer = self.create_timer(0.2, self.timer_callback)  # 5 Hz
 
         self.get_logger().info('Image publisher node has been started.')
 
@@ -55,6 +62,8 @@ class ImagePublisher(Node):
         if not ret or frame is None:
             self.get_logger().error('Error grabbing video frame')
             return
+
+        #self.get_logger().error('OK: grabbed video frame -------------------')
 
         stamp = self.get_clock().now().to_msg()
         frame_id = 'camera_frame'
