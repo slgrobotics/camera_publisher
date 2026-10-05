@@ -76,6 +76,7 @@ class ImagePublisher(Node):
         self.timer = self.create_timer(1.0 / self.fps, self.timer_callback)
 
         self.get_logger().info('Image publisher node has been started.')
+        self.get_logger().info('    Image size: %dx%d' % (self.image_width, self.image_height))
         self.get_logger().info('    Publishing at %.2f FPS' % self.fps)
         self.get_logger().info('    Frame ID: %s' % self.frame_id)
 
