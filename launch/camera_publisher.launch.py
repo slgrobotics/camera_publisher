@@ -34,7 +34,6 @@ from launch.substitutions import PathJoinSubstitution
 
 
 def generate_launch_description():
-    camera_name = LaunchConfiguration('camera_name')
     default_config = PathJoinSubstitution([
         FindPackageShare('cv_basics'),
         'config',
@@ -47,12 +46,6 @@ def generate_launch_description():
         description='Path to the ROS 2 parameter YAML file.',
     )
 
-    camera_name_arg = DeclareLaunchArgument(
-        'camera_name',
-        default_value='/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
-        description='GStreamer libcamerasrc camera-name value',
-    )
-
     # Arducam camera on Raspberry Pi 4 with the Raspberry Pi Camera Module v2.1 (Sony IMX219)
     # using GStreamer and the Ubuntu 24/26 libcamera stack
     camera_publisher_gs_node = Node(
@@ -63,7 +56,6 @@ def generate_launch_description():
         output='screen',
         parameters=[
             LaunchConfiguration('params_file'),
-            {'camera_name': camera_name}
         ],
     )
 
@@ -75,7 +67,6 @@ def generate_launch_description():
         output='screen',
         parameters=[
             LaunchConfiguration('params_file'),
-            {'camera_name': camera_name}
         ],
     )
 
@@ -87,7 +78,6 @@ def generate_launch_description():
         output='screen',
         parameters=[
             LaunchConfiguration('params_file'),
-            {'camera_name': camera_name}
         ],
     )
 
@@ -102,10 +92,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        camera_name_arg,
         config_arg,
         LogInfo(msg='Launching Camera Publisher:'),
-        LogInfo(msg=['    camera_name: ', camera_name]),
         LogInfo(msg=['    params_file: ', LaunchConfiguration('params_file')]),
         #camera_publisher_gs_node,
         #webcam_publisher_raw_node,
