@@ -1,4 +1,24 @@
 
+
+# A very basic webcam publisher node for workstation using standard OpenCV backend
+webcam_publisher_raw:
+  ros__parameters:
+    none: none # no parameters for this node, it just publishes raw images from the webcam
+
+# Webcam publisher node for workstation using standard OpenCV backend
+webcam_publisher:
+  ros__parameters:
+    fps: 20
+    frame_id: camera_link_optical
+
+# Raspberry Pi 4 with the Raspberry Pi Camera Module v2.1 (Sony IMX219)
+# using GStreamer and the Ubuntu 24/26 libcamera stack
+camera_publisher_gs:
+  ros__parameters:
+    fps: 5
+    frame_id: camera_link_optical
+
+# Synchronized camera info publisher for the above camera publishers
 fake_camera_info_node:
   ros__parameters:
     camera_fov: "92.0,76.0" 
@@ -7,24 +27,4 @@ fake_camera_info_node:
     output_topic: camera/image_raw
     output_type: raw
     camera_info_topic: camera/camera_info  # synchronized output with camera image
-    frame_id: camera_link_optical
-
-webcam_publisher_raw:
-  ros__parameters:
-    none: none # no parameters for this node, it just publishes raw images from the webcam
-
-webcam_publisher:
-  ros__parameters:
-    input_topic: camera/image_raw/compressed
-    input_type: compressed
-    output_topic: camera/image_raw
-    output_type: raw
-    frame_id: camera_link_optical
-
-camera_publisher_gs:
-  ros__parameters:
-    input_topic: camera/image_raw/compressed
-    input_type: compressed
-    output_topic: camera/image_raw
-    output_type: raw
     frame_id: camera_link_optical
