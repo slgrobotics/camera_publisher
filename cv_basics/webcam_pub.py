@@ -4,9 +4,13 @@ It is unlikely to work on Raspberry Pi 4 with the Raspberry Pi Camera Module v2.
 Use cv_basics/camera_gs_pub.py instead.
 
 Captures frames from a local camera (a webcam on a workstation) using OpenCV
-and publishes them at ~20 Hz as both:
+and publishes them at the configured rate (20 Hz by default) as both:
   • sensor_msgs/msg/Image              (/camera/image_raw)
   • sensor_msgs/msg/CompressedImage    (/camera/image_raw/compressed)
+
+Parameters:
+  fps: Capture and publish rate in frames per second.
+  frame_id: Frame ID assigned to published image messages.
 
 Author: Sergei Grichine / ChatGPT.com
 """
@@ -32,6 +36,12 @@ class ImagePublisher(Node):
 
         self.br = CvBridge()
 
+        self.fps = self.declare_parameter('fps', 20).value
+        if self.fps <= 0:
+            raise ValueError('The fps parameter must be greater than zero')
+        self.frame_id = str(
+            self.declare_parameter('frame_id', 'camera_frame').value)
+
         # Prefer V4L2 on Linux instead of default backend
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         if not self.cap.isOpened():
@@ -41,14 +51,16 @@ class ImagePublisher(Node):
         # Reduce load
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self.cap.set(cv2.CAP_PROP_FPS, 20)
+        self.cap.set(cv2.CAP_PROP_FPS, self.fps)
 
         # Optional: ask camera for MJPEG, often much faster on USB webcams
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
-        self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
+        self.timer = self.create_timer(1.0 / self.fps, self.timer_callback)
 
         self.get_logger().info('Image publisher node has been started.')
+        self.get_logger().info('    Publishing at %.2f FPS' % self.fps)
+        self.get_logger().info('    Frame ID: %s' % self.frame_id)
 
     def timer_callback(self):
         ret, frame = self.cap.read()
@@ -57,12 +69,10 @@ class ImagePublisher(Node):
             return
 
         stamp = self.get_clock().now().to_msg()
-        frame_id = 'camera_frame'
-
         # Raw image
         raw_msg = self.br.cv2_to_imgmsg(frame, encoding='bgr8')
         raw_msg.header.stamp = stamp
-        raw_msg.header.frame_id = frame_id
+        raw_msg.header.frame_id = self.frame_id
         self.raw_pub.publish(raw_msg)
 
         # Compressed image
@@ -77,7 +87,7 @@ class ImagePublisher(Node):
 
         comp_msg = CompressedImage()
         comp_msg.header.stamp = stamp
-        comp_msg.header.frame_id = frame_id
+        comp_msg.header.frame_id = self.frame_id
         comp_msg.format = 'jpeg'
         comp_msg.data = encoded.tobytes()
         self.compressed_pub.publish(comp_msg)
