@@ -67,15 +67,19 @@ class ImagePublisher(Node):
 
         # Find camera names with:
         #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
-        camera = self.declare_parameter(
+        camera_name = self.declare_parameter(
             'camera_name',
             '/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
         ).value
 
-        self.get_logger().info(f'Using camera: {camera}')
+        self.get_logger().info('Camera publisher node has been started.')
+        self.get_logger().info(f'    Using camera: {camera_name}')
+        self.get_logger().info('    Image size: %dx%d' % (self.image_width, self.image_height))
+        self.get_logger().info('    Publishing at %.2f FPS' % self.fps)
+        self.get_logger().info('    Frame ID: %s' % self.frame_id)
 
         cam_pipeline_str = (
-            f"libcamerasrc camera-name={camera} ! "
+            f"libcamerasrc camera-name={camera_name} ! "
             f"video/x-raw,width={self.image_width},height={self.image_height},framerate=10/1,format=RGBx ! "
             "videoconvert ! videoscale ! "
             f"video/x-raw,width={self.image_width},height={self.image_height},format=BGR ! appsink"
@@ -88,12 +92,9 @@ class ImagePublisher(Node):
             self.get_logger().error('Could not open video device')
             raise RuntimeError('Could not open video device')
 
-        self.timer = self.create_timer(1.0 / self.fps, self.timer_callback)
+        self.get_logger().info('OK: opened video device with GStreamer pipeline: %s' % cam_pipeline_str)
 
-        self.get_logger().info('Camera publisher node has been started.')
-        self.get_logger().info('    Image size: %dx%d' % (self.image_width, self.image_height))
-        self.get_logger().info('    Publishing at %.2f FPS' % self.fps)
-        self.get_logger().info('    Frame ID: %s' % self.frame_id)
+        self.timer = self.create_timer(1.0 / self.fps, self.timer_callback)
 
     def timer_callback(self):
         ret, frame = self.cap.read()
