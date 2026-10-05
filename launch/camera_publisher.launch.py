@@ -46,7 +46,7 @@ def generate_launch_description():
         package='cv_basics',
         executable='img_publisher_gs',
         name='camera_publisher_gs',
-        #namespace='camera_0',
+        #namespace='camera_0',       # uncomment when using fake_camera_info_node
         output='screen',
         parameters=[
             LaunchConfiguration('params_file'),
