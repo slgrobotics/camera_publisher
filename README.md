@@ -2,7 +2,7 @@ Back to [Main Project Home](https://github.com/slgrobotics/articubot_one/wiki)
 
 ## camera_publisher package
 
-### A simple ROS2 Webcam or FPV grabber image publisher
+### A simple ROS2 Arducam, Webcam or FPV grabber image publisher
  
 > This is a simple Python/OpenCV publisher, created by literally following directions here: 
 > - https://automaticaddison.com/getting-started-with-opencv-in-ros-2-foxy-fitzroy-python/
