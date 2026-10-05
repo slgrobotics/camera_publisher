@@ -11,6 +11,7 @@ and publishes them at the configured rate (20 Hz by default) as both:
 Parameters:
   fps: Capture and publish rate in frames per second.
   frame_id: Frame ID assigned to published image messages.
+  image_size: Requested capture resolution in WIDTHxHEIGHT form.
 
 Author: Sergei Grichine / ChatGPT.com
 """
@@ -21,6 +22,20 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 import cv2
+
+
+def parse_image_size(value: str) -> tuple[int, int]:
+    try:
+        width_text, height_text = value.lower().split('x')
+        width, height = int(width_text.strip()), int(height_text.strip())
+    except ValueError:
+        raise ValueError(
+            f'Invalid image_size {value!r}; expected WIDTHxHEIGHT, e.g. 640x480'
+        ) from None
+
+    if width <= 0 or height <= 0:
+        raise ValueError('image_size width and height must be greater than zero')
+    return width, height
 
 
 class ImagePublisher(Node):
@@ -41,6 +56,8 @@ class ImagePublisher(Node):
             raise ValueError('The fps parameter must be greater than zero')
         self.frame_id = str(
             self.declare_parameter('frame_id', 'camera_frame').value)
+        self.image_width, self.image_height = parse_image_size(
+            self.declare_parameter('image_size', '640x480').value)
 
         # Prefer V4L2 on Linux instead of default backend
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
@@ -49,8 +66,8 @@ class ImagePublisher(Node):
             raise RuntimeError('Could not open video device')
 
         # Reduce load
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
 
         # Optional: ask camera for MJPEG, often much faster on USB webcams

@@ -29,6 +29,21 @@ from cv_bridge import CvBridge
 import cv2
 
 
+def parse_image_size(value: str) -> tuple[int, int]:
+    try:
+        width_text, height_text = value.lower().split('x')
+        width, height = int(width_text.strip()), int(height_text.strip())
+    except ValueError:
+        raise ValueError(
+            f'Invalid image_size {value!r}; expected WIDTHxHEIGHT, e.g. 640x480'
+        ) from None
+
+    if width <= 0 or height <= 0:
+        raise ValueError('image_size width and height must be greater than zero')
+    return width, height
+
+
+
 class ImagePublisher(Node):
     def __init__(self):
         super().__init__('camera_publisher_gs')
@@ -47,6 +62,8 @@ class ImagePublisher(Node):
             raise ValueError('The fps parameter must be greater than zero')
         self.frame_id = str(
             self.declare_parameter('frame_id', 'camera_frame').value)
+        self.image_width, self.image_height = parse_image_size(
+            self.declare_parameter('image_size', '640x480').value)
 
         # Find camera names with:
         #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
@@ -59,9 +76,9 @@ class ImagePublisher(Node):
 
         cam_pipeline_str = (
             f"libcamerasrc camera-name={camera} ! "
-            "video/x-raw,width=640,height=480,framerate=10/1,format=RGBx ! "
+            "video/x-raw,width=self.image_width,height=self.image_height,framerate=10/1,format=RGBx ! "
             "videoconvert ! videoscale ! "
-            "video/x-raw,width=640,height=480,format=BGR ! appsink"
+            "video/x-raw,width=self.image_width,height=self.image_height,format=BGR ! appsink"
         )
 
         # Use gstreamer:
