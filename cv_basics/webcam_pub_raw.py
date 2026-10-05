@@ -1,5 +1,7 @@
-# Basic ROS 2 program to publish real-time streaming 
+# Basic ROS 2 program to publish real-time streaming
 # video from your built-in webcam
+# Uses OpenCV calls.
+#
 # Author:
 # - Addison Sears-Collins
 # - https://automaticaddison.com
@@ -21,13 +23,13 @@ class ImagePublisher(Node):
     Class constructor to set up the node
     """
     # Initiate the Node class's constructor and give it a name
-    super().__init__('image_publisher_raw')
+    super().__init__('webcam_publisher_raw')
       
     # Create the publisher. This publisher will publish an Image
     # to the video_frames topic. The queue size is 10 messages.
     self.publisher_ = self.create_publisher(Image, '/camera/image_raw', 10)  # 10 is queue size
       
-    # We will publish a message every 0.05 seconds
+    # We will publish a message every 0.05 seconds (20 FPS)
     timer_period = 0.05  # seconds
       
     # Create the timer
@@ -72,15 +74,15 @@ class ImagePublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    image_publisher = ImagePublisher()
+    camera_publisher = ImagePublisher()
 
     try:
-        rclpy.spin(image_publisher)
+        rclpy.spin(camera_publisher)
     except KeyboardInterrupt:
         print('Keyboard interrupt, shutting down.')
     finally:
         try:
-            image_publisher.destroy_node()
+            camera_publisher.destroy_node()
         finally:
             if rclpy.ok():
                 rclpy.shutdown()

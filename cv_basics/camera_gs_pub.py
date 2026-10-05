@@ -1,14 +1,24 @@
 """
-ROS2 webcam publisher node using standard OpenCV backend.
-It is unlikely to work on Raspberry Pi 4 with the Raspberry Pi Camera Module v2.1 (Sony IMX219) and the Ubuntu 24/26 libcamera stack.
-Use cv_basics/camera_gs_pub.py instead.
+ROS2 camera publisher node using GStreamer.
 
-Captures frames from a local camera (a webcam on a workstation) using OpenCV
-and publishes them at ~20 Hz as both:
+This node works on Raspberry Pi 4 with the Raspberry Pi Camera Module v2.1 (Sony IMX219) and the Ubuntu 24/26 libcamera stack.
+
+Captures frames from a local camera using GStreamer and OpenCV and publishes them at ~20 Hz
+as both:
   • sensor_msgs/msg/Image              (/camera/image_raw)
   • sensor_msgs/msg/CompressedImage    (/camera/image_raw/compressed)
 
 Author: Sergei Grichine / ChatGPT.com
+
+See https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md#python-opencv-and-gstreamer
+
+sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-base \
+ gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps \
+ gstreamer1.0-libcamera
+
+Find camera names with:
+ gst-device-monitor-1.0 Video 2>/dev/null | grep name
+
 """
 
 import rclpy
@@ -21,7 +31,7 @@ import cv2
 
 class ImagePublisher(Node):
     def __init__(self):
-        super().__init__('webcam_publisher')
+        super().__init__('camera_publisher_gs')
 
         self.raw_pub = self.create_publisher(Image, '/camera/image_raw', 10)
         self.compressed_pub = self.create_publisher(
@@ -32,29 +42,40 @@ class ImagePublisher(Node):
 
         self.br = CvBridge()
 
-        # Prefer V4L2 on Linux instead of default backend
-        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        # Find camera names with:
+        #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
+        camera = self.declare_parameter(
+            'camera_name',
+            '/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
+        ).value
+
+        self.get_logger().info(f'Using camera: {camera}')
+
+        cam_pipeline_str = (
+            f"libcamerasrc camera-name={camera} ! "
+            "video/x-raw,width=640,height=480,framerate=10/1,format=RGBx ! "
+            "videoconvert ! videoscale ! "
+            "video/x-raw,width=640,height=480,format=BGR ! appsink"
+        )
+
+        # Use gstreamer:
+        self.cap = cv2.VideoCapture(cam_pipeline_str, cv2.CAP_GSTREAMER)
+
         if not self.cap.isOpened():
             self.get_logger().error('Could not open video device')
             raise RuntimeError('Could not open video device')
 
-        # Reduce load
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self.cap.set(cv2.CAP_PROP_FPS, 20)
+        self.timer = self.create_timer(0.2, self.timer_callback)  # 5 Hz
 
-        # Optional: ask camera for MJPEG, often much faster on USB webcams
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-
-        self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
-
-        self.get_logger().info('Image publisher node has been started.')
+        self.get_logger().info('Camera publisher node has been started.')
 
     def timer_callback(self):
         ret, frame = self.cap.read()
         if not ret or frame is None:
             self.get_logger().error('Error grabbing video frame')
             return
+
+        self.get_logger().info('OK: grabbed video frame -------------------')
 
         stamp = self.get_clock().now().to_msg()
         frame_id = 'camera_frame'
@@ -89,15 +110,15 @@ class ImagePublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    image_publisher = ImagePublisher()
+    camera_publisher = ImagePublisher()
 
     try:
-        rclpy.spin(image_publisher)
+        rclpy.spin(camera_publisher)
     except KeyboardInterrupt:
         print('Keyboard interrupt, shutting down.')
     finally:
         try:
-            image_publisher.destroy_node()
+            camera_publisher.destroy_node()
         finally:
             if rclpy.ok():
                 rclpy.shutdown()
