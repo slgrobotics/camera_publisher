@@ -76,9 +76,9 @@ class ImagePublisher(Node):
 
         cam_pipeline_str = (
             f"libcamerasrc camera-name={camera} ! "
-            "video/x-raw,width=self.image_width,height=self.image_height,framerate=10/1,format=RGBx ! "
+            f"video/x-raw,width={self.image_width},height={self.image_height},framerate=10/1,format=RGBx ! "
             "videoconvert ! videoscale ! "
-            "video/x-raw,width=self.image_width,height=self.image_height,format=BGR ! appsink"
+            f"video/x-raw,width={self.image_width},height={self.image_height},format=BGR ! appsink"
         )
 
         # Use gstreamer:
