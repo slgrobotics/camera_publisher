@@ -110,5 +110,5 @@ def generate_launch_description():
         #camera_publisher_gs_node,
         #webcam_publisher_raw_node,
         webcam_publisher_node,
-        #fake_camera_info_node,
+        #fake_camera_info_node, # uncomment "namespace='camera_0'" when using fake_camera_info_node
     ])
