@@ -83,7 +83,7 @@ class ImagePublisher(Node):
             self.get_logger().error('Error grabbing video frame')
             return
 
-        self.get_logger().info('OK: grabbed video frame -------------------')
+        #self.get_logger().info('OK: grabbed video frame -------------------')
 
         stamp = self.get_clock().now().to_msg()
         frame_id = self.frame_id
