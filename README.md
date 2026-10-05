@@ -15,8 +15,10 @@ Works with either a webcam or an *FPV Camera + FPV Video Grabber* on an Ubuntu 2
 - use this package if standard [camera_ros binaries](https://github.com/christianrauch/camera_ros) don't work for you on a Raspberry Pi.
 - see [this guide](https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md) for *Arducams* and similar cameras on Raspberry Pi's.
 - the `camera_publisher_gs_node` uses GStreamer on Raspberry Pi's.
+Provide `camera_name` parameter in the [parameters file](https://github.com/slgrobotics/camera_publisher/blob/main/config/camera_publisher.yaml)
 - other nodes are for Workstation webcams, where _libcamera_ works fine with standard OpenCV calls.
-- you may want to review and edit the [launch file](https://github.com/slgrobotics/camera_publisher/blob/main/launch/camera_publisher.launch.py).
+- you may want to review and edit the [launch file](https://github.com/slgrobotics/camera_publisher/blob/main/launch/camera_publisher.launch.py)
+and [parameters file](https://github.com/slgrobotics/camera_publisher/blob/main/config/camera_publisher.yaml).
 
 ### Build instructions:
 
