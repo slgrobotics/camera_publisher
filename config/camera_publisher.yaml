@@ -16,7 +16,7 @@ webcam_publisher:
 # using GStreamer and the Ubuntu 24/26 libcamera stack
 camera_publisher_gs:
   ros__parameters:
-    camera_name: '/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10'
+    camera_name: '/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10'  # Find camera names with: gst-device-monitor-1.0 Video 2>/dev/null | grep name
     image_size: 640x480
     fps: 5
     frame_id: camera_link_optical

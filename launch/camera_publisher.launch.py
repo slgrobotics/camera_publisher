@@ -3,16 +3,15 @@ Launch the camera publisher and synthetic camera-info node.
 
 On a Raspberry Pi:
 
+    Use camera_publisher_gs_node
+
     See https://github.com/slgrobotics/robots_bringup/blob/main/Docs/Sensors/Camera.md#python-opencv-and-gstreamer
 
     sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps \
-    gstreamer1.0-libcamera
+      gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps \
+      gstreamer1.0-libcamera
 
-    Find camera names with:
-    gst-device-monitor-1.0 Video 2>/dev/null | grep name
-
-    Use camera_publisher_gs_node
+    Find camera names with:    gst-device-monitor-1.0 Video 2>/dev/null | grep name
 
 On a Workstation:
     Use cv_basics/webcam_pub.py or cv_basics/webcam_pub_raw.py

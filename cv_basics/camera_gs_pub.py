@@ -69,7 +69,7 @@ class ImagePublisher(Node):
         #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
         camera_name = self.declare_parameter(
             'camera_name',
-            '/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
+            'Error: provide "camera_name" parameter - use "gst-device-monitor-1.0 Video 2>/dev/null | grep name"',
         ).value
 
         self.get_logger().info('Camera publisher node has been started.')
