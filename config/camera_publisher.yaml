@@ -23,7 +23,7 @@ camera_publisher_gs:
 fake_camera_info_node:
   ros__parameters:
     camera_fov: "92.0,76.0" 
-    input_topic: camera/image_raw/compressed
+    input_topic: /camera_0/camera/image_raw/compressed
     input_type: compressed
     output_topic: camera/image_raw
     output_type: raw

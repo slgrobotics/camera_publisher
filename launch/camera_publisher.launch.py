@@ -46,6 +46,7 @@ def generate_launch_description():
         package='cv_basics',
         executable='img_publisher_gs',
         name='camera_publisher_gs',
+        #namespace='camera_0',
         output='screen',
         parameters=[
             LaunchConfiguration('params_file'),
