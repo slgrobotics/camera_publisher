@@ -36,8 +36,7 @@ def generate_launch_description():
 
     camera_name_arg = DeclareLaunchArgument(
         'camera_name',
-        #default_value='/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
-        default_value='v4l2_input.pci-0000_00_1a.0-usb-0_1.2_1.0',
+        default_value='/base/axi/pcie@1000120000/rp1/i2c@88000/imx219@10',
         description='GStreamer libcamerasrc camera-name value',
     )
 
