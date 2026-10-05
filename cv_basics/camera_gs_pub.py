@@ -5,8 +5,8 @@ This node works on Raspberry Pi 4 with the Raspberry Pi Camera Module v2.1 (Sony
 
 Captures frames from a local camera using GStreamer and OpenCV and publishes them at ~20 Hz
 as both:
-  • sensor_msgs/msg/Image              (/camera/image_raw)
-  • sensor_msgs/msg/CompressedImage    (/camera/image_raw/compressed)
+  • sensor_msgs/msg/Image              (camera/image_raw)
+  • sensor_msgs/msg/CompressedImage    (camera/image_raw/compressed)
 
 Author: Sergei Grichine / ChatGPT.com
 
@@ -33,10 +33,10 @@ class ImagePublisher(Node):
     def __init__(self):
         super().__init__('camera_publisher_gs')
 
-        self.raw_pub = self.create_publisher(Image, '/camera/image_raw', 10)
+        self.raw_pub = self.create_publisher(Image, 'camera/image_raw', 10)
         self.compressed_pub = self.create_publisher(
             CompressedImage,
-            '/camera/image_raw/compressed',
+            'camera/image_raw/compressed',
             10
         )
 

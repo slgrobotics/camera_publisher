@@ -5,8 +5,8 @@ Use cv_basics/camera_gs_pub.py instead.
 
 Captures frames from a local camera (a webcam on a workstation) using OpenCV
 and publishes them at the configured rate (20 Hz by default) as both:
-  • sensor_msgs/msg/Image              (/camera/image_raw)
-  • sensor_msgs/msg/CompressedImage    (/camera/image_raw/compressed)
+  • sensor_msgs/msg/Image              (camera/image_raw)
+  • sensor_msgs/msg/CompressedImage    (camera/image_raw/compressed)
 
 Parameters:
   fps: Capture and publish rate in frames per second.
@@ -27,10 +27,10 @@ class ImagePublisher(Node):
     def __init__(self):
         super().__init__('webcam_publisher')
 
-        self.raw_pub = self.create_publisher(Image, '/camera/image_raw', 10)
+        self.raw_pub = self.create_publisher(Image, 'camera/image_raw', 10)
         self.compressed_pub = self.create_publisher(
             CompressedImage,
-            '/camera/image_raw/compressed',
+            'camera/image_raw/compressed',
             10
         )
 
