@@ -42,6 +42,12 @@ class ImagePublisher(Node):
 
         self.br = CvBridge()
 
+        self.fps = self.declare_parameter('fps', 5).value
+        if self.fps <= 0:
+            raise ValueError('The fps parameter must be greater than zero')
+        self.frame_id = str(
+            self.declare_parameter('frame_id', 'camera_frame').value)
+
         # Find camera names with:
         #     gst-device-monitor-1.0 Video 2>/dev/null | grep name
         camera = self.declare_parameter(
@@ -65,9 +71,11 @@ class ImagePublisher(Node):
             self.get_logger().error('Could not open video device')
             raise RuntimeError('Could not open video device')
 
-        self.timer = self.create_timer(0.2, self.timer_callback)  # 5 Hz
+        self.timer = self.create_timer(1.0 / self.fps, self.timer_callback)
 
         self.get_logger().info('Camera publisher node has been started.')
+        self.get_logger().info('    Publishing at %.2f FPS' % self.fps)
+        self.get_logger().info('    Frame ID: %s' % self.frame_id)
 
     def timer_callback(self):
         ret, frame = self.cap.read()
@@ -78,7 +86,7 @@ class ImagePublisher(Node):
         self.get_logger().info('OK: grabbed video frame -------------------')
 
         stamp = self.get_clock().now().to_msg()
-        frame_id = 'camera_frame'
+        frame_id = self.frame_id
 
         # Raw image
         raw_msg = self.br.cv2_to_imgmsg(frame, encoding='bgr8')
